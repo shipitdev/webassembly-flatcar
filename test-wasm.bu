@@ -1,0 +1,37 @@
+variant: flatcar
+version: 1.1.0
+
+# Initial test configuration for running WASM directly via sysext
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyForTestingOnly core@localhost
+
+storage:
+  directories:
+    - path: /opt/wasm
+      mode: 0755
+    - path: /etc/extensions
+      mode: 0755
+
+systemd:
+  units:
+    - name: wasm-test.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=WASM HTTP Microservice Test (Wasmtime)
+        # Ensure sysext overlay is loaded before running wasmtime binary
+        After=systemd-sysext.service
+        Requires=systemd-sysext.service
+
+        [Service]
+        Type=simple
+        # pre-open port 8080 and pass to WASI app
+        ExecStart=/usr/bin/wasmtime run --tcplisten 0.0.0.0:8080 /opt/wasm/app.wasm
+        Restart=always
+        RestartSec=2s
+
+        [Install]
+        WantedBy=multi-user.target
