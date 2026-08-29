@@ -1,0 +1,29 @@
+variant: flatcar
+version: 1.1.0
+
+# Baseline container deployment using Docker on Flatcar
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyForTestingOnly core@localhost
+
+systemd:
+  units:
+    - name: container-app.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Flatcar Edge Monitor (Docker Container Baseline)
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=true
+        ExecStartPre=-/usr/bin/docker rm -f edge-monitor
+        ExecStart=/usr/bin/docker run -d --name edge-monitor -p 8080:8080 edge-monitor:latest
+        ExecStop=/usr/bin/docker stop edge-monitor
+
+        [Install]
+        WantedBy=multi-user.target

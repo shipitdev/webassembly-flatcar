@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-// Response structs for health check and rich telemetry
 type HealthStatus struct {
 	Status    string `json:"status"`
 	Runtime   string `json:"runtime"`
@@ -22,8 +21,6 @@ type SystemMetrics struct {
 	Service       string `json:"service"`
 	Runtime       string `json:"runtime"`
 	UptimeSeconds int64  `json:"uptime_seconds"`
-	
-	// Memory stats from Go runtime
 	AllocBytes    uint64 `json:"alloc_bytes"`
 	TotalAlloc    uint64 `json:"total_alloc_bytes"`
 	SysBytes      uint64 `json:"sys_bytes"`
@@ -40,7 +37,6 @@ func main() {
 		port = "8080"
 	}
 
-	// 1. Healthcheck endpoint
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(HealthStatus{
@@ -51,15 +47,14 @@ func main() {
 		})
 	})
 
-	// 2. Rich JSON Telemetry endpoint for Edge monitoring & CI scraping
 	http.HandleFunc("/telemetry", func(w http.ResponseWriter, r *http.Request) {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(SystemMetrics{
-			Service:       "flatcar-wasm-edge-monitor",
-			Runtime:       fmt.Sprintf("wasm/%s", runtime.GOARCH),
+			Service:       "flatcar-container-edge-monitor",
+			Runtime:       fmt.Sprintf("container/%s", runtime.GOARCH),
 			UptimeSeconds: int64(time.Since(startedAt).Seconds()),
 			AllocBytes:    m.Alloc,
 			TotalAlloc:    m.TotalAlloc,
@@ -70,7 +65,6 @@ func main() {
 		})
 	})
 
-	// 3. Prometheus-compatible text metrics endpoint
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
@@ -94,7 +88,7 @@ func main() {
 	})
 
 	serverAddr := fmt.Sprintf(":%s", port)
-	log.Printf("[WASM] edge monitor started on %s (runtime: %s/%s)\n", serverAddr, runtime.GOOS, runtime.GOARCH)
+	log.Printf("[CONTAINER] edge monitor started on %s (runtime: %s/%s)\n", serverAddr, runtime.GOOS, runtime.GOARCH)
 
 	if err := http.ListenAndServe(serverAddr, nil); err != nil {
 		log.Fatalf("server exited with error: %v", err)

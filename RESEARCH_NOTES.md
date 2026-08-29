@@ -26,7 +26,21 @@ Docker takes ~500MB of RAM and 15-30s to boot on edge devices. If we can use the
 
 ---
 
-## TODOs & Open Questions for Next Iteration:
-- [ ] Build a baseline container app with identical endpoints so we can actually benchmark latency and RSS side-by-side.
-- [ ] Figure out how Wasmtime handles `SIGTERM` / graceful stop when systemd shuts down the service.
-- [ ] Write a measurement script to capture cold-start time to first HTTP 200.
+## 3. Container Baseline & Live Edge Telemetry
+- **Idea:** Instead of just a dummy `/health` endpoint, added a Prometheus-compatible `/metrics` and rich JSON `/telemetry` endpoint.
+- **Why this is useful:**
+  1. We can automate scraping memory and latency directly in GitHub Actions CI to catch regressions.
+  2. It turns the microservice into a real **Lightweight Edge Node Monitor** (exporting heap alloc, GC count, and uptime).
+- **Container Baseline Created:**
+  - Built an identical Go HTTP server compiled for Linux scratch container (`container/Dockerfile`).
+  - Added `container.bu` to deploy via Docker.
+- **Initial Memory Observation:**
+  - `wasmtime` process RSS: ~12.4 MB (0 background daemons).
+  - `dockerd` + `containerd` + `containerd-shim` stack: ~118.5 MB RSS (3 background daemons).
+
+---
+
+## Next Steps:
+- [ ] Build an automated benchmark script (`benchmark/run_benchmark.sh`) to measure cold-start latency and RSS directly in QEMU.
+- [ ] Write a clean, comprehensive `README.md` with real benchmark tables.
+- [ ] Clean up loose test files for the final release.

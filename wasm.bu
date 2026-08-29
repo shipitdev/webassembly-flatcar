@@ -1,0 +1,34 @@
+variant: flatcar
+version: 1.1.0
+
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyForTestingOnly core@localhost
+
+storage:
+  directories:
+    - path: /opt/wasm
+      mode: 0755
+    - path: /etc/extensions
+      mode: 0755
+
+systemd:
+  units:
+    - name: wasm-app.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Flatcar Edge Monitor (Wasmtime WASM Microservice)
+        After=systemd-sysext.service
+        Requires=systemd-sysext.service
+
+        [Service]
+        Type=simple
+        ExecStart=/usr/bin/wasmtime run --tcplisten 0.0.0.0:8080 /opt/wasm/app.wasm
+        Restart=always
+        RestartSec=1s
+
+        [Install]
+        WantedBy=multi-user.target
