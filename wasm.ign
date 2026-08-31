@@ -1,0 +1,36 @@
+{
+  "ignition": {
+    "version": "3.4.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "name": "core",
+        "sshAuthorizedKeys": [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKeyForTestingOnly core@localhost"
+        ]
+      }
+    ]
+  },
+  "storage": {
+    "directories": [
+      {
+        "path": "/opt/wasm",
+        "mode": 493
+      },
+      {
+        "path": "/etc/extensions",
+        "mode": 493
+      }
+    ]
+  },
+  "systemd": {
+    "units": [
+      {
+        "contents": "[Unit]\nDescription=Flatcar Edge Scale Engine (Wasmtime Microservice)\nAfter=systemd-sysext.service\nRequires=systemd-sysext.service\n\n[Service]\nType=simple\nExecStart=/usr/bin/wasmtime run -S inherit-network=y /opt/wasm/app.wasm\nRestart=always\nRestartSec=1s\n\n# Resource limits for edge nodes\nMemoryMax=64M\nCPUQuota=50%\n\n[Install]\nWantedBy=multi-user.target\n",
+        "enabled": true,
+        "name": "wasm-app.service"
+      }
+    ]
+  }
+}
